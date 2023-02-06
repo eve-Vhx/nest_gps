@@ -1,0 +1,11 @@
+<launch>
+	<node pkg="nest" 
+	name="nest_gps_server" 
+	type="nest_gps_server.py" 
+	output="screen">
+	</node>
+
+	
+
+	<!--  <node pkg="nest" name="nest_gps_client" type="nest_gps_client.py" output="screen"></node>  -->
+</launch>
