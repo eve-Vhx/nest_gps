@@ -56,8 +56,8 @@ def my_callback(request):
 
 if __name__ == '__main__':
 	rospy.init_node('gps_server')
-	nest_service = rospy.Service('/nest1_gps', NestGPSMessage, my_callback)
-	nest_gps_pub = rospy.Publisher('/nest1_gps_info', NavSatFix, queue_size=10)
+	nest_service = rospy.Service('nest_gps', NestGPSMessage, my_callback)
+	nest_gps_pub = rospy.Publisher('nest_gps_info', NavSatFix, queue_size=10)
 	rate = rospy.Rate(1)
 	rate.sleep()
 	print("Service started!")
