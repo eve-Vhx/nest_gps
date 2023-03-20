@@ -1,7 +1,7 @@
 <launch>
 	<node ns="NEST11014" pkg="nest" 
-	name="nest_gps_server" 
-	type="nest_gps_server.py" 
+	name="nest_gps_pub" 
+	type="nest_gps_pub.py" 
 	output="screen">
 	</node>
 
