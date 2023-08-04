@@ -47,7 +47,7 @@ class NestGPS(Node):
         except KeyboardInterrupt:  # ^C
             print('/nest_gps service stopped')
 
-        session.close()
+        # session.close()
 
 def main(args=None):
     print("nest_gps node started!")
