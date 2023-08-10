@@ -7,7 +7,7 @@ class NestGPS(Node):
 
     def __init__(self):
         super().__init__('n_gps_pub')
-        self.nest_gps_pub = self.create_publisher(NavSatFix,'/nest_gps_info',10)
+        self.nest_gps_pub = self.create_publisher(NavSatFix,'nest_gps_info',10)
         timer_period = 2.0 #seconds
         self.loop_cb()
 

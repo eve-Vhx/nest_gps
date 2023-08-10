@@ -1,29 +1,25 @@
 from launch import LaunchDescription
-from launch_ros.actions import Node
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
 
 def generate_launch_description():
-    # Declare launch arguments
-    input_id_arg = DeclareLaunchArgument(
-        "input_id",
-        default_value="NEST11010",
-        description="Input ID for the drone"
-    )
+    # Declare the launch argument
+    declare_namespace_arg = DeclareLaunchArgument(
+        'namespace',   # Name of the argument
+        default_value='nest01',   # Default value
+        description='Namespace for the mission node')   # Description (optional)
 
-    # Configure the 'nest_gps_node' node
+    # Use the argument in the Node action
     nest_gps_node = Node(
-        package="nest_gps",
-        executable="nest_gps_node",
-        output="screen",
-        # parameters=[
-        #     {"id": LaunchConfiguration("input_id")}
-        # ]
-    )
+        package='nest_gps',
+        executable='nest_gps_node',
+        name='nest_gps',
+        namespace=LaunchConfiguration('namespace'),   # Using the argument
+        output='screen')
 
-    # Create the launch description and populate it with the nodes and launch arguments
-    ld = LaunchDescription()
-    # ld.add_action(input_id_arg)
-    ld.add_action(nest_gps_node)
-
-    return ld
+    # Include the actions in the launch description
+    return LaunchDescription([
+        declare_namespace_arg,
+        nest_gps_node
+    ])
