@@ -24,6 +24,7 @@ setup(
     entry_points={
         'console_scripts': [
             'nest_gps_node=nest_gps.nest_gps_t:main',
+            'nest_sync_node=nest_gps.nest_sync:main',
         ],
     },
 )
