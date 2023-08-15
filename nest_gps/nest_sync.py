@@ -1,42 +1,60 @@
 import rclpy
 from rclpy.node import Node
 from rclpy.client import Client
-from msg_pkg.srv import UiMissionReq
-from px4_msgs.msg import SensorGps
+from msg_pkg.srv import UiMissionReq, ChrgDrone
+from px4_msgs.msg import SensorGps, VehicleGlobalPosition
+from rclpy.qos import QoSProfile
+import copy
 import math
 
 EARTH_RADIUS = 6371000 # in meters
 
-class ListenerNode(Node):
-
+class NestMissionNode(Node):
     def __init__(self):
-        super().__init__('listener_node')
-        self.declare_parameter('id', 'default_topic_name')
-        topic_name = self.get_parameter('id').value
-        self.subscription = self.create_subscription(
-            SensorGps,
-            topic_name+'/fmu/out/vehicle_gps_position',
-            self.listener_callback,
-            10)
-        self.subscription  # prevent unused variable warning
+        super().__init__('nest_mission_update')
+        print("Initializing NestMissionNode...")
+        self.qos_profile = QoSProfile(depth=10, reliability=0)
+        self.gps_subscription = self.create_subscription(
+            VehicleGlobalPosition, "fmu/out/vehicle_global_position",
+            self.gps_callback,
+            self.qos_profile)
+        print("GPS subscription created.")
         self.last_lat = None
         self.last_lon = None
-        self.sync_client = self.create_client(UiMissionReq, topic_name+'/ui_mission_req_service')
-        while not self.sync_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('service not available, waiting...')
+        self.gps_set = False
+        self.sync_set = False
+        self.sync_client = None
+        self.sync_service = self.create_service(UiMissionReq,'mission_sync',self.start_sync,qos_profile = self.qos_profile)
+        self.sync_client = self.create_client(UiMissionReq, 'ui_mission_upd',qos_profile = QoSProfile(depth=10,reliability=1))
 
-    def listener_callback(self, msg):
-        if self.last_lat and self.last_lon:
+        print("Sync service initialized.")
+
+    def start_sync(self, request, response):
+        print("Starting sync...")
+        self.mission = request
+        self.sync_set = True
+        return response  # make sure to return a response
+
+    def gps_callback(self, msg):
+        if self.last_lat and self.last_lon and self.sync_set:
             distance = self.calculate_distance(self.last_lat, self.last_lon, msg.lat, msg.lon)
+            # print(distance)
             if distance > 5:
+                print(f"Calculated distance: {distance}")
+                self.get_logger().info('Calling service due to distance threshold breach.')
                 self.call_service(msg)
-                update_reference(msg)
-        else:
-            update_reference(msg)
+                self.update_reference(msg)
+        elif not self.gps_set:
+            self.update_reference(msg)
 
     def update_reference(self,msg):
-        self.last_lat = msg.lat
-        self.last_lon = msg.lon
+        if msg.lat and msg.lon:
+            self.last_lat = msg.lat
+            self.last_lon = msg.lon
+            self.gps_set = True
+            print("GPS ref set")
+            print(msg.lat)
+            print(msg.lon)
 
     def calculate_distance(self, lat1, lon1, lat2, lon2):
         dlat = math.radians(lat2 - lat1)
@@ -47,24 +65,54 @@ class ListenerNode(Node):
         return distance
 
     def call_service(self, gps_data):
-        # This function calls the service with the updated GPS data
-        request = UiMissionReq.Request()
-        request.timestamp = gps_data.timestamp
-        request.landing.position[0] = gps_data.lat
-        request.landing.position[1] = gps_data.lon
-        future = self.sync_client.call_async(request)
-        rclpy.spin_until_future_complete(self, future)
-        if future.result() is not None:
-            # Handle the response or log it
-            self.get_logger().info('Received response: %r' % future.result())
-        else:
-            self.get_logger().error('Exception while calling service: %r' % future.exception())
+        try:
+            # request = self.mission
+            old_mission = copy.deepcopy(self.mission)
+            request = UiMissionReq.Request()
+            request.mission_type = old_mission.mission_type
+            request.timestamp = gps_data.timestamp
+            request.landing = old_mission.landing
+            request.waypoints = old_mission.waypoints
+            request.landing.position[0] = gps_data.lat
+            request.landing.position[1] = gps_data.lon
+            waypoint_set = False
+            for waypoint in reversed(request.waypoints):
+                if waypoint.position[0] != 0 and waypoint.position[1] != 0:  # Assuming 0,0 is the default empty filler
+                    waypoint.position[0] = gps_data.lat
+                    waypoint.position[1] = gps_data.lon
+                    waypoint_set = True 
+                    print(waypoint.position[0] , waypoint.position[1])
+                    break
+                else:
+                    print(waypoint.position[0] , waypoint.position[1])
+            if not waypoint_set:
+                print("No non zero waypoint found to set")
+            self.get_logger().info('Sending service request to '+self.mission.nest_id+'/ui_mission_upd')
+            print(request)
+            while not self.sync_client.wait_for_service(timeout_sec=1.0):
+                self.get_logger().info('service not available, waiting again...')
+            # Asynchronously send the request and handle the response in a separate callback
+            future = self.sync_client.call_async(request)
+            future.add_done_callback(self.handle_send_mission_response)
+        except Exception as e:
+            self.get_logger().error(f"Exception in callback: {e}")
+
+    def handle_send_mission_response(self, future):
+        try:
+            result = future.result()
+            if result is not None:
+                self.get_logger().info('Mission update sent successfully to drone')
+                # Note: You might need to send or process the response here if necessary
+            else:
+                self.get_logger().error('Failed to send mission update')
+        except Exception as e:
+            self.get_logger().error(f"Exception in send mission response: {e}")
 
 def main(args=None):
     rclpy.init(args=args)
-    listener_node = ListenerNode()
-    rclpy.spin(listener_node)
-    listener_node.destroy_node()
+    nest_mission_node = NestMissionNode()
+    rclpy.spin(nest_mission_node)
+    nest_mission_node.destroy_node()
     rclpy.shutdown()
 
 if __name__ == '__main__':
