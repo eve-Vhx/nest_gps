@@ -3,6 +3,7 @@ from rclpy.node import Node
 from rclpy.client import Client
 from msg_pkg.srv import UiMissionReq, ChrgDrone
 from px4_msgs.msg import SensorGps, VehicleGlobalPosition
+from sensor_msgs.msg import NavSatFix
 from rclpy.qos import QoSProfile
 import copy
 import math
