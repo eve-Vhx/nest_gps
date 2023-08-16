@@ -33,5 +33,5 @@ def generate_launch_description():
     return LaunchDescription([
         declare_namespace_arg,
         nest_gps_node,
-        nest_sync_node
+        nest_sync_node,
     ])

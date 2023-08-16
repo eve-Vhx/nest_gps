@@ -3,6 +3,7 @@ from rclpy.node import Node
 import gps		# the gpsd interface module
 from sensor_msgs.msg import NavSatFix
 from rclpy.qos import QoSProfile
+import time
 
 class NestGPS(Node):
 
@@ -11,6 +12,9 @@ class NestGPS(Node):
         self.qos_profile = QoSProfile(depth=10, reliability=0)
         self.nest_gps_pub = self.create_publisher(NavSatFix,'nest_gps_info',self.qos_profile)
         timer_period = 2.0 #seconds
+        self._last_update_time = time.time()
+        self._average_latitude = 0.0
+        self._average_longitude = 0.0
         self.loop_cb()
 
     def loop_cb(self):
@@ -31,14 +35,22 @@ class NestGPS(Node):
                     print(session.fix.time, end="")
                 else:
                     print('n/a', end="")
-
                 if ((gps.isfinite(session.fix.latitude) and
                     gps.isfinite(session.fix.longitude))):
                     print(" Lat %.6f Lon %.6f" %
                         (session.fix.latitude, session.fix.longitude))
-                    self.nest_gps_data.latitude = session.fix.latitude
-                    self.nest_gps_data.longitude = session.fix.longitude
+                    current_time = time.time()
+                    dt = current_time - self._last_update_time
+                    self._last_update_time = current_time
+                    alpha = dt / (dt + 0.25)  # Filter coefficient using the calculated dt
+                    # Apply low-pass filter for latitude and longitude
+                    self._average_latitude = alpha * session.fix.latitude + (1 - alpha) * self._average_latitude
+                    self._average_longitude = alpha * session.fix.longitude + (1 - alpha) * self._average_longitude
+                    
+                    self.nest_gps_data.latitude = self._average_latitude
+                    self.nest_gps_data.longitude = self._average_longitude
                     self.nest_gps_data.altitude = session.fix.altitude
+                    
                     self.nest_gps_pub.publish(self.nest_gps_data)
                 else:
                     print(" Lat n/a Lon n/a")
