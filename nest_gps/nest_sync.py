@@ -17,7 +17,7 @@ class NestMissionNode(Node):
         self.qos_profile = QoSProfile(depth=10, reliability=0)
         self.gps_subscription = self.create_subscription(
             NavSatFix, "nest_gps_info",
-            self.gps_callback)
+            self.gps_callback,self.qos_profile)
         print("GPS subscription created.")
         self.last_lat = None
         self.last_lon = None

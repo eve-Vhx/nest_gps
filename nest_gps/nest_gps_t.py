@@ -2,12 +2,14 @@ import rclpy
 from rclpy.node import Node
 import gps		# the gpsd interface module
 from sensor_msgs.msg import NavSatFix
+from rclpy.qos import QoSProfile
 
 class NestGPS(Node):
 
     def __init__(self):
         super().__init__('n_gps_pub')
-        self.nest_gps_pub = self.create_publisher(NavSatFix,'nest_gps_info',10)
+        self.qos_profile = QoSProfile(depth=10, reliability=0)
+        self.nest_gps_pub = self.create_publisher(NavSatFix,'nest_gps_info',self.qos_profile)
         timer_period = 2.0 #seconds
         self.loop_cb()
 
