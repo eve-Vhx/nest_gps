@@ -13,10 +13,10 @@ def generate_launch_description():
 
 
     # Configure the 'nest_gps_node' node
-    nest_sync_node = Node(
+    nest_sync_sim_node = Node(
         package='nest_gps',  # Name of your package
-        executable='nest_sync_node',  # Name of your node executable
-        name='nest_sync_node',
+        executable='nest_sync_sim_node',  # Name of your node executable
+        name='nest_sync_sim_node',
         namespace=LaunchConfiguration('namespace'),   # Using the argument
         output="screen",
 
@@ -28,7 +28,7 @@ def generate_launch_description():
     # Create the launch description and populate it with the nodes and launch arguments
     ld = LaunchDescription([        
     declare_namespace_arg,
-    nest_sync_node
+    nest_sync_sim_node
     ])
     # ld.add_action(input_id_arg)
     # ld.add_action(nest_sync_node)

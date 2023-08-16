@@ -15,8 +15,9 @@ class NestMissionNode(Node):
         print("Initializing NestMissionNode...")
         self.qos_profile = QoSProfile(depth=10, reliability=0)
         self.gps_subscription = self.create_subscription(
-            NavSatFix, "nest_gps_info",
-            self.gps_callback)
+            VehicleGlobalPosition, "fmu/out/vehicle_global_position",
+            self.gps_callback,
+            self.qos_profile)
         print("GPS subscription created.")
         self.last_lat = None
         self.last_lon = None
@@ -36,7 +37,7 @@ class NestMissionNode(Node):
 
     def gps_callback(self, msg):
         if self.last_lat and self.last_lon and self.sync_set:
-            distance = self.calculate_distance(self.last_lat, self.last_lon, msg.latitude, msg.longitude)
+            distance = self.calculate_distance(self.last_lat, self.last_lon, msg.lat, msg.lon)
             # print(distance)
             if distance > 5:
                 print(f"Calculated distance: {distance}")
@@ -47,13 +48,13 @@ class NestMissionNode(Node):
             self.update_reference(msg)
 
     def update_reference(self,msg):
-        if msg.latitude and msg.longitude:
-            self.last_lat = msg.latitude
-            self.last_lon = msg.longitude
+        if msg.lat and msg.lon:
+            self.last_lat = msg.lat
+            self.last_lon = msg.lon
             self.gps_set = True
             print("GPS ref set")
-            print(msg.latitude)
-            print(msg.longitude)
+            print(msg.lat)
+            print(msg.lon)
 
     def calculate_distance(self, lat1, lon1, lat2, lon2):
         dlat = math.radians(lat2 - lat1)
