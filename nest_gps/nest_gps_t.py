@@ -42,7 +42,7 @@ class NestGPS(Node):
                     current_time = time.time()
                     dt = current_time - self._last_update_time
                     self._last_update_time = current_time
-                    alpha = dt / (dt + 0.25)  # Filter coefficient using the calculated dt
+                    alpha = dt / (dt + 5.0)  # Filter coefficient using the calculated dt
                     # Apply low-pass filter for latitude and longitude
                     self._average_latitude = alpha * session.fix.latitude + (1 - alpha) * self._average_latitude
                     self._average_longitude = alpha * session.fix.longitude + (1 - alpha) * self._average_longitude
