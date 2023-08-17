@@ -15,7 +15,7 @@ class NestGPS(Node):
         self._last_update_time = time.time()
         self._average_latitude = 0.0
         self._average_longitude = 0.0
-        self.first_input = True
+        self.msg_count = 0
         self.loop_cb()
 
     def loop_cb(self):
@@ -28,9 +28,9 @@ class NestGPS(Node):
                     # not useful, probably not a TPV message
                     continue
 
-                print('Mode: %s(%d) Time: ' %
-                    (("Invalid", "NO_FIX", "2D", "3D")[session.fix.mode],
-                    session.fix.mode), end="")
+                # print('Mode: %s(%d) Time: ' %
+                #     (("Invalid", "NO_FIX", "2D", "3D")[session.fix.mode],
+                #     session.fix.mode), end="")
                 # print time, if we have it
                 if gps.TIME_SET & session.valid:
                     print(session.fix.time, end="")
@@ -38,11 +38,11 @@ class NestGPS(Node):
                     print('n/a', end="")
                 if ((gps.isfinite(session.fix.latitude) and
                     gps.isfinite(session.fix.longitude))):
-                    if self.first_input:
+                    if self.msg_count<10:
                         self.nest_gps_data.latitude = session.fix.latitude
                         self.nest_gps_data.longitude = session.fix.longitude
                         self.nest_gps_data.altitude = session.fix.altitude
-                        self.first_input = False
+                        self.msg_count += 1
                     else:
                         print(" Lat %.6f Lon %.6f" %
                             (session.fix.latitude, session.fix.longitude))
