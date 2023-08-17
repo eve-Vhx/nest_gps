@@ -36,6 +36,7 @@ class NestMissionNode(Node):
         return response  # make sure to return a response
 
     def gps_callback(self, msg):
+        print("call back ongoing")
         if self.last_lat and self.last_lon and self.sync_set:
             distance = self.calculate_distance(self.last_lat, self.last_lon, msg.latitude, msg.longitude)
             self.get_logger().info(f'distance: {distance}')
