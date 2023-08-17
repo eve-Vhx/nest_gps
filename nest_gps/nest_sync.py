@@ -16,13 +16,13 @@ class NestMissionNode(Node):
         super().__init__('nest_mission_update')
         print("Initializing NestMissionNode...")
         self.qos_profile = QoSProfile(depth=10, reliability=0)
-        # self.gps_subscription = self.create_subscription(
-        #     NavSatFix, "nest_gps_info",
-        #     self.gps_callback,self.qos_profile)
-        self.telem_subscription = self.create_subscription(
-            TelemMsg, "ui_telem_data",
-            self.gps_callback, self.qos_profile
-        )
+        self.gps_subscription = self.create_subscription(
+            NavSatFix, "/NEST11_0_1_1/nest_gps_info",
+            self.gps_callback,self.qos_profile)
+        # self.telem_subscription = self.create_subscription(
+        #     TelemMsg, "ui_telem_data",
+        #     self.gps_callback, self.qos_profile
+        # )
         print("GPS subscription created.")
         self.last_lat = None
         self.last_lon = None
@@ -40,31 +40,10 @@ class NestMissionNode(Node):
         self.sync_set = True
         return response  # make sure to return a response
 
-    # def gps_callback(self, msg):
-    #     print("call back ongoing")
-    #     if self.last_lat and self.last_lon and self.sync_set:
-    #         distance = self.calculate_distance(self.last_lat, self.last_lon, msg.latitude, msg.longitude)
-    #         self.get_logger().info(f'distance: {distance}')
-    #         if distance > 5:
-    #             print(f"Calculated distance: {distance}")
-    #             self.get_logger().info('Calling service due to distance threshold breach.')
-    #             self.call_service(msg)
-    #             self.update_reference(msg)
-    #     elif not self.gps_set:
-    #         self.update_reference(msg)
-
-    # def update_reference(self,msg):
-    #     if msg.latitude and msg.longitude:
-    #         self.last_lat = msg.latitude
-    #         self.last_lon = msg.longitude
-    #         self.gps_set = True
-    #         print("GPS ref set")
-    #         print(msg.latitude)
-    #         print(msg.longitude)
     def gps_callback(self, msg):
         print("call back ongoing")
         if self.last_lat and self.last_lon and self.sync_set:
-            distance = self.calculate_distance(self.last_lat, self.last_lon, msg.lat, msg.lon)  # Note the change here
+            distance = self.calculate_distance(self.last_lat, self.last_lon, msg.latitude, msg.longitude)
             self.get_logger().info(f'distance: {distance}')
             if distance > 5:
                 print(f"Calculated distance: {distance}")
@@ -74,14 +53,35 @@ class NestMissionNode(Node):
         elif not self.gps_set:
             self.update_reference(msg)
 
-    def update_reference(self, msg):
-        if msg.lat and msg.lon:  # Note the change here
-            self.last_lat = msg.lat
-            self.last_lon = msg.lon
+    def update_reference(self,msg):
+        if msg.latitude and msg.longitude:
+            self.last_lat = msg.latitude
+            self.last_lon = msg.longitude
             self.gps_set = True
             print("GPS ref set")
-            print(msg.lat)
-            print(msg.lon)
+            print(msg.latitude)
+            print(msg.longitude)
+    # def gps_callback(self, msg):
+    #     print("call back ongoing")
+    #     if self.last_lat and self.last_lon and self.sync_set:
+    #         distance = self.calculate_distance(self.last_lat, self.last_lon, msg.lat, msg.lon)  # Note the change here
+    #         self.get_logger().info(f'distance: {distance}')
+    #         if distance > 5:
+    #             print(f"Calculated distance: {distance}")
+    #             self.get_logger().info('Calling service due to distance threshold breach.')
+    #             self.call_service(msg)
+    #             self.update_reference(msg)
+    #     elif not self.gps_set:
+    #         self.update_reference(msg)
+
+    # def update_reference(self, msg):
+    #     if msg.lat and msg.lon:  # Note the change here
+    #         self.last_lat = msg.lat
+    #         self.last_lon = msg.lon
+    #         self.gps_set = True
+    #         print("GPS ref set")
+    #         print(msg.lat)
+    #         print(msg.lon)
     def calculate_distance(self, lat1, lon1, lat2, lon2):
         dlat = math.radians(lat2 - lat1)
         dlon = math.radians(lon2 - lon1)
