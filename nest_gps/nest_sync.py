@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
 from rclpy.client import Client
@@ -8,6 +9,7 @@ from sensor_msgs.msg import NavSatFix
 from rclpy.qos import QoSProfile
 import copy
 import math
+import setproctitle
 
 EARTH_RADIUS = 6371000 # in meters
 
@@ -135,6 +137,7 @@ class NestMissionNode(Node):
             self.get_logger().error(f"Exception in send mission response: {e}")
 
 def main(args=None):
+    setproctitle.setproctitle('nest_sync_node')
     rclpy.init(args=args)
     nest_mission_node = NestMissionNode()
     rclpy.spin(nest_mission_node)

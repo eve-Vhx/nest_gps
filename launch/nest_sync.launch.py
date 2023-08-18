@@ -20,7 +20,7 @@ def generate_launch_description():
     
     nest_sync_node = Node(
         package='nest_gps',  # Name of your package
-        executable='nest_sync_node',  # Name of your node executable
+        executable='nest_sync.py',  # Name of your node executable
         name='nest_sync_node',
         namespace=LaunchConfiguration('namespace'),   # Using the argument
         output="screen",

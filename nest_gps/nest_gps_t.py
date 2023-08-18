@@ -1,9 +1,13 @@
+#!/usr/bin/env python3
+
 import rclpy
 from rclpy.node import Node
 import gps		# the gpsd interface module
 from sensor_msgs.msg import NavSatFix
 from rclpy.qos import QoSProfile
 import time
+import setproctitle
+
 
 class NestGPS(Node):
 
@@ -39,9 +43,8 @@ class NestGPS(Node):
                 if ((gps.isfinite(session.fix.latitude) and
                     gps.isfinite(session.fix.longitude))):
                     if self.msg_count<10:
-                        self.nest_gps_data.latitude = session.fix.latitude
-                        self.nest_gps_data.longitude = session.fix.longitude
-                        self.nest_gps_data.altitude = session.fix.altitude
+                        self._average_latitude = session.fix.latitude
+                        self._average_longitude = session.fix.longitude
                         self.msg_count += 1
                     else:
                         print(" Lat %.6f Lon %.6f" %
@@ -71,6 +74,7 @@ class NestGPS(Node):
 
 def main(args=None):
     print("nest_gps node started")
+    setproctitle.setproctitle('nest_gps_node')
     rclpy.init(args=args)
     nest_gps = NestGPS()
     rclpy.spin(nest_gps)

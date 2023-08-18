@@ -1,31 +1,15 @@
-from setuptools import setup
 import os
 from glob import glob
+from setuptools import setup
 
-package_name = 'nest_gps'
+package_name = 'connect_pkg'
 
 setup(
-    name=package_name,
-    version='0.0.0',
-    packages=[package_name],
+    # Other parameters ...
     data_files=[
-        ('share/ament_index/resource_index/packages',
-            ['resource/' + package_name]),
-        ('share/' + package_name, ['package.xml']),
-        (os.path.join('share', package_name), glob('launch/*.launch.py'))
-    ],
-    install_requires=['setuptools'],
-    zip_safe=True,
-    maintainer='mostafa',
-    maintainer_email='mostafa@todo.todo',
-    description='TODO: Package description',
-    license='TODO: License declaration',
-    tests_require=['pytest'],
-    entry_points={
-        'console_scripts': [
-            'nest_gps_node=nest_gps.nest_gps_t:main',
-            'nest_sync_node=nest_gps.nest_sync:main',
-            'nest_sync_sim_node=nest_gps.nest_sync_sim:main',
-        ],
-    },
+      (os.path.join('share', package_name, 'launch'),
+         glob(os.path.join('launch', '*.launch.py'))),
+      (os.path.join('share', package_name, 'config'),
+         glob(os.path.join('config', '*.yaml'))),
+    ]
 )
